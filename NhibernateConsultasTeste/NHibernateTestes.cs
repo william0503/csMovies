@@ -86,5 +86,37 @@ namespace NhibernateConsultasTeste
                 Assert.AreEqual(2, releasePesquisado.Legendas.Count);
             }
         }
+
+
+        [Test]
+        public void Inserir_com_cascade2()
+        {
+            using (new TransactionScope(TransactionScopeOption.RequiresNew))
+            {
+                // Inicializa a session
+                var provider = new SessionFactoryProvider();
+                var sessionProvider = new SessionProvider(provider);
+                var sessaoAtual = sessionProvider.GetCurrentSession();
+
+                // Cria um filme
+                var filme = new Filme { Nome = "Filme 1" };
+                // Cria as release
+                var release = new Release { Nome = "release" };
+                var release2 = new Release { Nome = "release" };
+                // Adiciona as release no filme
+                filme.AdicionarRelease(release);
+                filme.AdicionarRelease(release2);
+                // Grava o filme que já grava automaticamente os filhos
+                sessaoAtual.Save(filme);
+
+                /////////////////////////////////////////////
+                // LIMPA A SESSÃO - FORÇA A PESQUISA NO BANCO
+                sessaoAtual.Clear();
+
+                // Pesquisa as releases do filme via lazyloading
+                var filmePesquisado = sessaoAtual.Get<Filme>(filme.Id);
+                Assert.AreEqual(0, filmePesquisado.Releases.Count);
+            }
+        }
     }
 }
